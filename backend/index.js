@@ -1,4 +1,5 @@
 const express = require('express');
+const db = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -16,311 +17,324 @@ app.use((req, res, next) => {
   next();
 });
 
-// Mock Database
-let patients = [
-  {
-    id: 'eleanor-vance',
-    patientCode: 'EC-78294',
-    name: 'Eleanor Vance',
-    age: 78,
-    relation: 'Mother',
-    residence: 'Residence Suite 402',
-    avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBHYHapAKFDD4sgE_2PEuftlgnG0HOsLP0lccAxSCf7aQR_E0OyMrrj4fkI1m2SpGKvNX70GcMo4cOaRyxCP6Bs2IN7FPId_EYg7DL2pxMNb8gHy6zZ0jK61W2rFW_TX6MsBtE7c646O0hrHDJ_1QknPSsZMp9K1dMMnSNM4U-N1sGpXRxfC7q-B2UDdswx6XBTG2ufy_hY091RsVeNBBKcBGTRW-Cu_u0gEWDSruw',
-    status: 'Active',
-    adherenceScore: 94,
-    conditions: ['Type 2 Diabetes', 'Hypertension'],
-    assignedDoctor: 'Dr. Sarah Jenkins',
-    doctorSpecialty: 'Cardiology',
-    nextDoctorVisit: {
-      doctor: 'Dr. Sarah Jenkins',
-      clinic: 'St. Jude Heart Clinic',
-      specialty: 'Cardiology',
-      date: 'Oct 24, 2026',
-      time: '10:30 AM',
-      purpose: 'Routine Hypertension & Heart Valve Review',
-      transportNotes: 'Wheelchair transport confirmed',
-      status: 'Confirmed'
-    },
-    medications: [
-      {
-        id: 'med-1',
-        name: 'Metformin',
-        fullName: 'Metformin Hydrochloride',
-        dosage: '500 mg',
-        type: 'Oral Tablet',
-        description: '1 White Oval Tablet • Blood sugar',
-        frequency: 'Twice Daily',
-        times: ['8:00 AM (Breakfast)', '1:00 PM (Lunch)'],
-        instructions: 'Take with food and a full glass of cool water.',
-        nextDue: 'Today, 1:00 PM',
-        status: 'pending',
-        takenToday: false,
-        icon: 'pill'
-      },
-      {
-        id: 'med-2',
-        name: 'CoQ10',
-        fullName: 'Coenzyme Q10',
-        dosage: '100 mg',
-        type: 'Softgel',
-        description: '1 Amber Softgel • Heart vitamin',
-        frequency: 'Once Daily',
-        times: ['1:00 PM (Lunch)'],
-        instructions: 'Take with lunch.',
-        nextDue: 'Today, 1:00 PM',
-        status: 'pending',
-        takenToday: false,
-        icon: 'hevc'
-      },
-      {
-        id: 'med-3',
-        name: 'Lisinopril',
-        fullName: 'Lisinopril Dihydrate',
-        dosage: '10 mg',
-        type: 'Oral Tablet',
-        description: 'Blood pressure control',
-        frequency: 'Once Daily',
-        times: ['8:00 AM (Morning)'],
-        instructions: 'Full glass of water',
-        nextDue: 'Tomorrow, 8:00 AM',
-        status: 'completed',
-        takenToday: true,
-        lastTaken: '8:12 AM',
-        icon: 'cardiology'
-      },
-      {
-        id: 'med-4',
-        name: 'Vitamin D3',
-        fullName: 'Cholecalciferol',
-        dosage: '1000 IU',
-        type: 'Softgel',
-        description: 'Bone support supplement',
-        frequency: 'Daily',
-        times: ['12:00 PM (Midday)'],
-        instructions: 'Daily midday support',
-        nextDue: 'Tomorrow, 12:00 PM',
-        status: 'completed',
-        takenToday: true,
-        lastTaken: '12:05 PM',
-        icon: 'vital_signs'
-      }
-    ]
-  },
-  {
-    id: 'arthur-vance',
-    patientCode: 'EC-65102',
-    name: 'Arthur Vance',
-    age: 82,
-    relation: 'Uncle',
-    residence: 'Assisted Living Wing B',
-    avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD99byptjuhNgCpydCJ16Hz_u_ZwJfqSRxclPZrtP416owqTMZzluxrdWg5KmtITrgFspnVZilMdkGKNNWMhUn6vK7mho-aKAMpXaw-8yrIbFJZ--m39KTPcPeFXqb726pHlVGQOzDHaIJO7UoGfXAG3oYLxr9BZ4pUwFKXy7wI9t5aH0OQ1k6nkoZgQNI21oK4tMrmor4LzWsOoIEKmTho80rO4onBcCN2ed8aX4g',
-    status: 'Assisted Care',
-    adherenceScore: 88,
-    conditions: ['Mild Cognitive Impairment'],
-    assignedDoctor: 'Dr. Robert Chen',
-    doctorSpecialty: 'Neurology',
-    nextDoctorVisit: {
-      doctor: 'Dr. Robert Chen',
-      clinic: 'Memory & Cognitive Center',
-      specialty: 'Neurology',
-      date: 'Oct 24, 2026',
-      time: '2:00 PM',
-      purpose: 'Cognitive Baseline Check & Medication Review',
-      transportNotes: 'Accompanied by care attendant',
-      status: 'Confirmed'
-    },
-    medications: [
-      {
-        id: 'med-a1',
-        name: 'Donepezil',
-        fullName: 'Donepezil Hydrochloride',
-        dosage: '5 mg',
-        type: 'Oral Tablet',
-        description: 'Cognitive function support',
-        frequency: 'Once Daily',
-        times: ['7:00 PM (Dinner)'],
-        instructions: 'Take right before bedtime.',
-        nextDue: 'Today, 7:00 PM',
-        status: 'pending',
-        takenToday: false,
-        icon: 'pill'
-      }
-    ]
-  },
-  {
-    id: 'martha-vance',
-    patientCode: 'EC-44910',
-    name: 'Martha Vance',
-    age: 75,
-    relation: 'Aunt',
-    residence: 'Independent Living Apt 12B',
-    avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCl3Luy93g6qs-rkbF79yp2l7HmZkrHcVJzSbdtvrYyefjhYmldH7T6i2CoqSwXk6GGA8RFTUIoucggE_tapYCn6Rd30nNUwI7u6gY4LyI7QahLPWEg7vtBaWyPCqYAxL4cAHm3jaB-Yu6XP3D1s-U45XQK5OMyoRaj_iNb9tDL3jLoj-Wseh0pRu5znOduL1SRWVS-XAbhaKaj6pQUGyzg_WgDGJmJABJ1qPomgf0',
-    status: 'Active',
-    adherenceScore: 100,
-    conditions: ['Mild Osteoarthritis'],
-    assignedDoctor: 'Dr. Emily Taylor',
-    doctorSpecialty: 'Geriatrics',
-    nextDoctorVisit: {
-      doctor: 'Dr. Emily Taylor',
-      clinic: 'Comprehensive Senior Care',
-      specialty: 'Geriatrics',
-      date: 'Nov 2, 2026',
-      time: '11:15 AM',
-      purpose: 'Annual Geriatric Wellness Review',
-      transportNotes: 'Self-transport via senior shuttle',
-      status: 'Confirmed'
-    },
-    medications: [
-      {
-        id: 'med-m1',
-        name: 'Lisinopril',
-        fullName: 'Lisinopril',
-        dosage: '10 mg',
-        type: 'Oral Tablet',
-        description: 'Morning blood pressure',
-        frequency: 'Once Daily',
-        times: ['8:00 AM'],
-        instructions: 'Take with breakfast.',
-        nextDue: 'Tomorrow, 8:00 AM',
-        status: 'completed',
-        takenToday: true,
-        lastTaken: '8:05 AM',
-        icon: 'pill'
-      }
-    ]
-  }
-];
+// Helper to format patient record with nested medications and nextDoctorVisit
+function formatPatient(patientRow, medications = [], visits = []) {
+  const patientMeds = medications
+    .filter(m => m.patient_id === patientRow.id)
+    .map(m => ({
+      id: m.id,
+      name: m.name,
+      fullName: m.full_name || m.name,
+      dosage: m.dosage,
+      type: m.type,
+      description: m.description,
+      frequency: m.frequency,
+      times: m.times || [],
+      instructions: m.instructions,
+      nextDue: m.next_due,
+      status: m.status,
+      takenToday: m.taken_today,
+      lastTaken: m.last_taken,
+      icon: m.icon || 'pill'
+    }));
+
+  const visitRow = visits.find(v => v.patient_id === patientRow.id);
+  const nextDoctorVisit = visitRow ? {
+    id: visitRow.id,
+    doctor: visitRow.doctor,
+    clinic: visitRow.clinic,
+    specialty: visitRow.specialty,
+    date: visitRow.date,
+    time: visitRow.time,
+    purpose: visitRow.purpose,
+    transportNotes: visitRow.transport_notes,
+    status: visitRow.status || 'Confirmed'
+  } : null;
+
+  return {
+    id: patientRow.id,
+    patientCode: patientRow.patient_code,
+    name: patientRow.name,
+    age: patientRow.age,
+    relation: patientRow.relation,
+    residence: patientRow.residence,
+    avatar: patientRow.avatar,
+    status: patientRow.status,
+    adherenceScore: patientRow.adherence_score,
+    conditions: patientRow.conditions || [],
+    assignedDoctor: patientRow.assigned_doctor,
+    doctorSpecialty: patientRow.doctor_specialty,
+    nextDoctorVisit,
+    medications: patientMeds
+  };
+}
 
 // Routes
 
-// 1. Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', service: 'ElderCare API', timestamp: new Date().toISOString() });
+// 1. Health check with DB status
+app.get('/api/health', async (req, res) => {
+  try {
+    const dbRes = await db.query('SELECT NOW()');
+    res.json({
+      status: 'ok',
+      service: 'ElderCare API',
+      database: 'connected',
+      dbTime: dbRes.rows[0].now,
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: 'degraded',
+      service: 'ElderCare API',
+      database: 'disconnected',
+      error: err.message,
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 // 2. Authentication
-app.post('/api/login', (req, res) => {
-  const { role, email, password, patientId, pin } = req.body;
+app.post('/api/login', async (req, res) => {
+  const { role, email, patientId, pin } = req.body;
 
-  if (role === 'patient') {
-    // Eleanor Vance is default patient
-    const patient = patients.find(p => p.patientCode.toLowerCase() === (patientId || '').trim().toLowerCase()) || patients[0];
-    return res.json({
-      success: true,
-      role: 'patient',
-      user: {
-        id: patient.id,
-        patientCode: patient.patientCode,
-        name: patient.name,
-        avatar: patient.avatar,
-        residence: patient.residence
+  try {
+    if (role === 'patient') {
+      const code = (patientId || 'EC-78294').trim();
+      const patientRes = await db.query(
+        'SELECT * FROM patients WHERE LOWER(patient_code) = LOWER($1)',
+        [code]
+      );
+
+      let patient = patientRes.rows[0];
+      if (!patient) {
+        // Fallback to Eleanor if not found
+        const fallbackRes = await db.query('SELECT * FROM patients LIMIT 1');
+        patient = fallbackRes.rows[0];
       }
-    });
-  } else if (role === 'family') {
-    return res.json({
-      success: true,
-      role: 'family',
-      user: {
-        id: 'sarah-vance',
-        name: 'Sarah Vance',
-        email: email || 'sarah.vance@familycare.net',
-        roleTitle: 'Primary Caregiver',
-        avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBHYHapAKFDD4sgE_2PEuftlgnG0HOsLP0lccAxSCf7aQR_E0OyMrrj4fkI1m2SpGKvNX70GcMo4cOaRyxCP6Bs2IN7FPId_EYg7DL2pxMNb8gHy6zZ0jK61W2rFW_TX6MsBtE7c646O0hrHDJ_1QknPSsZMp9K1dMMnSNM4U-N1sGpXRxfC7q-B2UDdswx6XBTG2ufy_hY091RsVeNBBKcBGTRW-Cu_u0gEWDSruw'
+
+      return res.json({
+        success: true,
+        role: 'patient',
+        user: {
+          id: patient.id,
+          patientCode: patient.patient_code,
+          name: patient.name,
+          avatar: patient.avatar,
+          residence: patient.residence
+        }
+      });
+    } else if (role === 'family') {
+      const caregiverEmail = (email || 'sarah.vance@familycare.net').trim();
+      const userRes = await db.query(
+        'SELECT * FROM users WHERE LOWER(email) = LOWER($1) AND role = $2',
+        [caregiverEmail, 'family']
+      );
+
+      let user = userRes.rows[0];
+      if (!user) {
+        user = {
+          id: 'sarah-vance',
+          name: 'Sarah Vance',
+          email: caregiverEmail,
+          roleTitle: 'Primary Caregiver',
+          avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBHYHapAKFDD4sgE_2PEuftlgnG0HOsLP0lccAxSCf7aQR_E0OyMrrj4fkI1m2SpGKvNX70GcMo4cOaRyxCP6Bs2IN7FPId_EYg7DL2pxMNb8gHy6zZ0jK61W2rFW_TX6MsBtE7c646O0hrHDJ_1QknPSsZMp9K1dMMnSNM4U-N1sGpXRxfC7q-B2UDdswx6XBTG2ufy_hY091RsVeNBBKcBGTRW-Cu_u0gEWDSruw'
+        };
       }
-    });
+
+      return res.json({
+        success: true,
+        role: 'family',
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          roleTitle: user.role_title || 'Primary Caregiver',
+          avatar: user.avatar
+        }
+      });
+    }
+
+    res.status(400).json({ success: false, message: 'Invalid role' });
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ success: false, message: 'Authentication failed', error: err.message });
   }
-
-  res.status(400).json({ success: false, message: 'Invalid role' });
 });
 
 // 3. Get all patients
-app.get('/api/patients', (req, res) => {
-  res.json({ success: true, data: patients });
+app.get('/api/patients', async (req, res) => {
+  try {
+    const patientsRes = await db.query('SELECT * FROM patients ORDER BY name ASC');
+    const medsRes = await db.query('SELECT * FROM medications ORDER BY created_at ASC');
+    const visitsRes = await db.query('SELECT * FROM doctor_visits');
+
+    const formatted = patientsRes.rows.map(p => formatPatient(p, medsRes.rows, visitsRes.rows));
+    res.json({ success: true, data: formatted });
+  } catch (err) {
+    console.error('Error fetching patients:', err);
+    res.status(500).json({ success: false, message: 'Error retrieving patients', error: err.message });
+  }
 });
 
 // 4. Get specific patient
-app.get('/api/patients/:id', (req, res) => {
-  const patient = patients.find(p => p.id === req.params.id);
-  if (!patient) return res.status(404).json({ success: false, message: 'Patient not found' });
-  res.json({ success: true, data: patient });
+app.get('/api/patients/:id', async (req, res) => {
+  try {
+    const patientRes = await db.query('SELECT * FROM patients WHERE id = $1', [req.params.id]);
+    if (patientRes.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Patient not found' });
+    }
+
+    const medsRes = await db.query('SELECT * FROM medications WHERE patient_id = $1 ORDER BY created_at ASC', [req.params.id]);
+    const visitsRes = await db.query('SELECT * FROM doctor_visits WHERE patient_id = $1', [req.params.id]);
+
+    const formatted = formatPatient(patientRes.rows[0], medsRes.rows, visitsRes.rows);
+    res.json({ success: true, data: formatted });
+  } catch (err) {
+    console.error('Error fetching patient:', err);
+    res.status(500).json({ success: false, message: 'Error retrieving patient', error: err.message });
+  }
 });
 
 // 5. Patient logs medication as taken
-app.post('/api/patients/:id/take-medication', (req, res) => {
-  const patient = patients.find(p => p.id === req.params.id);
-  if (!patient) return res.status(404).json({ success: false, message: 'Patient not found' });
-
+app.post('/api/patients/:id/take-medication', async (req, res) => {
+  const patientId = req.params.id;
   const { medicationIds } = req.body;
-  if (medicationIds && Array.isArray(medicationIds)) {
-    patient.medications.forEach(m => {
-      if (medicationIds.includes(m.id)) {
-        m.takenToday = true;
-        m.status = 'completed';
-        m.lastTaken = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      }
-    });
-  } else {
-    // Mark first pending ones (e.g. lunchtime batch) as taken
-    patient.medications.forEach(m => {
-      if (m.nextDue.includes('1:00 PM') || m.times.some(t => t.includes('1:00 PM'))) {
-        m.takenToday = true;
-        m.status = 'completed';
-        m.lastTaken = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      }
-    });
+  const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  try {
+    if (medicationIds && Array.isArray(medicationIds) && medicationIds.length > 0) {
+      await db.query(`
+        UPDATE medications 
+        SET taken_today = TRUE, status = 'completed', last_taken = $1, updated_at = NOW()
+        WHERE patient_id = $2 AND id = ANY($3)
+      `, [nowTime, patientId, medicationIds]);
+    } else {
+      // Mark lunchtime batch as taken
+      await db.query(`
+        UPDATE medications 
+        SET taken_today = TRUE, status = 'completed', last_taken = $1, updated_at = NOW()
+        WHERE patient_id = $2 AND (next_due LIKE '%1:00 PM%' OR '1:00 PM (Lunch)' = ANY(times))
+      `, [nowTime, patientId]);
+    }
+
+    // Recalculate adherence score
+    const allMeds = await db.query('SELECT taken_today FROM medications WHERE patient_id = $1', [patientId]);
+    if (allMeds.rows.length > 0) {
+      const completed = allMeds.rows.filter(m => m.taken_today).length;
+      const newScore = Math.min(100, Math.round((completed / allMeds.rows.length) * 100));
+      await db.query('UPDATE patients SET adherence_score = $1, updated_at = NOW() WHERE id = $2', [newScore, patientId]);
+    }
+
+    // Fetch updated patient
+    const patientRes = await db.query('SELECT * FROM patients WHERE id = $1', [patientId]);
+    const medsRes = await db.query('SELECT * FROM medications WHERE patient_id = $1 ORDER BY created_at ASC', [patientId]);
+    const visitsRes = await db.query('SELECT * FROM doctor_visits WHERE patient_id = $1', [patientId]);
+
+    const formatted = formatPatient(patientRes.rows[0], medsRes.rows, visitsRes.rows);
+    res.json({ success: true, message: 'Medication marked as taken in database', data: formatted });
+  } catch (err) {
+    console.error('Error updating medication intake:', err);
+    res.status(500).json({ success: false, message: 'Failed to update medication status', error: err.message });
   }
-
-  // Recalculate adherence
-  const completedCount = patient.medications.filter(m => m.takenToday).length;
-  patient.adherenceScore = Math.min(100, Math.round((completedCount / patient.medications.length) * 100));
-
-  res.json({ success: true, message: 'Medication marked as taken', data: patient });
 });
 
-// 6. Add or update medication for a patient
-app.post('/api/patients/:id/medications', (req, res) => {
-  const patient = patients.find(p => p.id === req.params.id);
-  if (!patient) return res.status(404).json({ success: false, message: 'Patient not found' });
-
+// 6. Add medication for a patient
+app.post('/api/patients/:id/medications', async (req, res) => {
+  const patientId = req.params.id;
   const { name, dosage, frequency, times, instructions, type } = req.body;
-  const newMed = {
-    id: 'med-' + Date.now(),
-    name: name || 'New Medication',
-    fullName: name,
-    dosage: dosage || '10 mg',
-    type: type || 'Oral Tablet',
-    description: `${dosage} oral dose`,
-    frequency: frequency || 'Once Daily',
-    times: times || ['8:00 AM'],
-    instructions: instructions || 'Take with water',
-    nextDue: 'Today, 8:00 AM',
-    status: 'pending',
-    takenToday: false,
-    icon: 'pill'
-  };
+  const newId = 'med-' + Date.now();
 
-  patient.medications.push(newMed);
-  res.json({ success: true, message: 'Medication added successfully', data: patient });
+  try {
+    await db.query(`
+      INSERT INTO medications (id, patient_id, name, full_name, dosage, type, description, frequency, times, instructions, next_due, status, taken_today, icon)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending', FALSE, 'pill')
+    `, [
+      newId,
+      patientId,
+      name || 'New Medication',
+      name,
+      dosage || '10 mg',
+      type || 'Oral Tablet',
+      `${dosage} oral dose`,
+      frequency || 'Once Daily',
+      times || ['8:00 AM'],
+      instructions || 'Take with water',
+      'Today, 8:00 AM'
+    ]);
+
+    const patientRes = await db.query('SELECT * FROM patients WHERE id = $1', [patientId]);
+    const medsRes = await db.query('SELECT * FROM medications WHERE patient_id = $1 ORDER BY created_at ASC', [patientId]);
+    const visitsRes = await db.query('SELECT * FROM doctor_visits WHERE patient_id = $1', [patientId]);
+
+    const formatted = formatPatient(patientRes.rows[0], medsRes.rows, visitsRes.rows);
+    res.json({ success: true, message: 'Medication saved to database', data: formatted });
+  } catch (err) {
+    console.error('Error adding medication:', err);
+    res.status(500).json({ success: false, message: 'Failed to add medication', error: err.message });
+  }
 });
 
 // 7. Delete medication
-app.delete('/api/patients/:id/medications/:medId', (req, res) => {
-  const patient = patients.find(p => p.id === req.params.id);
-  if (!patient) return res.status(404).json({ success: false, message: 'Patient not found' });
+app.delete('/api/patients/:id/medications/:medId', async (req, res) => {
+  const { id: patientId, medId } = req.params;
 
-  patient.medications = patient.medications.filter(m => m.id !== req.params.medId);
-  res.json({ success: true, message: 'Medication deleted', data: patient });
+  try {
+    await db.query('DELETE FROM medications WHERE id = $1 AND patient_id = $2', [medId, patientId]);
+
+    const patientRes = await db.query('SELECT * FROM patients WHERE id = $1', [patientId]);
+    const medsRes = await db.query('SELECT * FROM medications WHERE patient_id = $1 ORDER BY created_at ASC', [patientId]);
+    const visitsRes = await db.query('SELECT * FROM doctor_visits WHERE patient_id = $1', [patientId]);
+
+    const formatted = formatPatient(patientRes.rows[0], medsRes.rows, visitsRes.rows);
+    res.json({ success: true, message: 'Medication deleted from database', data: formatted });
+  } catch (err) {
+    console.error('Error deleting medication:', err);
+    res.status(500).json({ success: false, message: 'Failed to delete medication', error: err.message });
+  }
 });
 
 // 8. Update doctor visit
-app.put('/api/patients/:id/appointment', (req, res) => {
-  const patient = patients.find(p => p.id === req.params.id);
-  if (!patient) return res.status(404).json({ success: false, message: 'Patient not found' });
+app.put('/api/patients/:id/appointment', async (req, res) => {
+  const patientId = req.params.id;
+  const { doctor, clinic, specialty, date, time, purpose, transportNotes, status } = req.body;
 
-  patient.nextDoctorVisit = { ...patient.nextDoctorVisit, ...req.body };
-  res.json({ success: true, message: 'Appointment updated', data: patient });
+  try {
+    const existing = await db.query('SELECT id FROM doctor_visits WHERE patient_id = $1', [patientId]);
+
+    if (existing.rows.length > 0) {
+      await db.query(`
+        UPDATE doctor_visits 
+        SET doctor = COALESCE($1, doctor),
+            clinic = COALESCE($2, clinic),
+            specialty = COALESCE($3, specialty),
+            date = COALESCE($4, date),
+            time = COALESCE($5, time),
+            purpose = COALESCE($6, purpose),
+            transport_notes = COALESCE($7, transport_notes),
+            status = COALESCE($8, status),
+            updated_at = NOW()
+        WHERE patient_id = $9
+      `, [doctor, clinic, specialty, date, time, purpose, transportNotes, status, patientId]);
+    } else {
+      const newId = 'doc-' + Date.now();
+      await db.query(`
+        INSERT INTO doctor_visits (id, patient_id, doctor, clinic, specialty, date, time, purpose, transport_notes, status)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      `, [newId, patientId, doctor, clinic, specialty, date, time, purpose, transportNotes, status || 'Confirmed']);
+    }
+
+    const patientRes = await db.query('SELECT * FROM patients WHERE id = $1', [patientId]);
+    const medsRes = await db.query('SELECT * FROM medications WHERE patient_id = $1 ORDER BY created_at ASC', [patientId]);
+    const visitsRes = await db.query('SELECT * FROM doctor_visits WHERE patient_id = $1', [patientId]);
+
+    const formatted = formatPatient(patientRes.rows[0], medsRes.rows, visitsRes.rows);
+    res.json({ success: true, message: 'Appointment updated in database', data: formatted });
+  } catch (err) {
+    console.error('Error updating appointment:', err);
+    res.status(500).json({ success: false, message: 'Failed to update appointment', error: err.message });
+  }
 });
 
 app.listen(PORT, () => {
-  console.log(`ElderCare Express server running on port ${PORT}`);
+  console.log(`ElderCare Express server connected to Supabase and running on port ${PORT}`);
 });
