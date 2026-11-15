@@ -303,6 +303,17 @@ export function PatientProvider({ children }) {
     await api.updateAppointment(pId, appointmentData);
   };
 
+  const addPatient = async (patientData) => {
+    const res = await api.addPatient(patientData);
+    if (res && res.data) {
+      setPatients(prev => [...prev, res.data]);
+      setSelectedPatientId(res.data.id);
+      showToast(`Enrolled ${res.data.name}! ID: ${res.data.patientCode}`, 'badge');
+      return res;
+    }
+    return null;
+  };
+
   return (
     <PatientContext.Provider value={{
       patients,
@@ -310,6 +321,7 @@ export function PatientProvider({ children }) {
       setSelectedPatientId,
       selectedPatient,
       takeMedicine,
+      addPatient,
       addMedication,
       updateMedication,
       deleteMedication,

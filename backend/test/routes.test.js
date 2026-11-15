@@ -88,6 +88,22 @@ describe('ElderCare Backend API Routes (In-Memory)', () => {
     });
   });
 
+  describe('POST /api/patients', () => {
+    it('rejects patient creation when name is missing with HTTP 400', async () => {
+      const res = await dispatchRequest('POST', '/api/patients', { age: 80 });
+      assert.strictEqual(res.status, 400);
+      assert.strictEqual(res.data.success, false);
+      assert.strictEqual(res.data.message, 'Patient name is required');
+    });
+
+    it('rejects patient creation when name is only whitespace with HTTP 400', async () => {
+      const res = await dispatchRequest('POST', '/api/patients', { name: '   ', age: 80 });
+      assert.strictEqual(res.status, 400);
+      assert.strictEqual(res.data.success, false);
+      assert.strictEqual(res.data.message, 'Patient name is required');
+    });
+  });
+
   describe('Endpoint Error Handling', () => {
     it('returns 404 for unknown endpoints', async () => {
       const res = await dispatchRequest('GET', '/api/non-existent-endpoint');

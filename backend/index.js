@@ -112,6 +112,21 @@ app.post('/api/login', async (req, res) => {
         patient = fallbackRes.rows[0];
       }
 
+      // If user row exists, verify PIN if provided
+      if (patient && pin) {
+        const userRes = await db.query(
+          'SELECT * FROM users WHERE LOWER(patient_code) = LOWER($1)',
+          [patient.patient_code]
+        );
+        const userRow = userRes.rows[0];
+        if (userRow && (userRow.pin || userRow.password)) {
+          const inputPin = String(pin).trim();
+          if (userRow.pin !== inputPin && userRow.password !== inputPin) {
+            return res.status(401).json({ success: false, message: 'Invalid patient PIN or password' });
+          }
+        }
+      }
+
       return res.json({
         success: true,
         role: 'patient',
@@ -173,6 +188,103 @@ app.get('/api/patients', async (req, res) => {
   } catch (err) {
     console.error('Error fetching patients:', err);
     res.status(500).json({ success: false, message: 'Error retrieving patients', error: err.message });
+  }
+});
+
+// 4. Create new patient and login account
+app.post('/api/patients', async (req, res) => {
+  const {
+    name,
+    age,
+    relation,
+    residence,
+    assignedDoctor,
+    doctorSpecialty,
+    conditions,
+    patientCode,
+    password,
+    pin,
+    avatar
+  } = req.body;
+
+  if (!name || !name.trim()) {
+    return res.status(400).json({ success: false, message: 'Patient name is required' });
+  }
+
+  const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const patientId = `${slug}-${Date.now().toString().slice(-4)}`;
+  const code = (patientCode && patientCode.trim()) || `EC-${Math.floor(10000 + Math.random() * 90000)}`;
+  const patientPin = (pin && String(pin).trim()) || (password && String(password).trim()) || String(Math.floor(1000 + Math.random() * 9000));
+  const patientPassword = (password && String(password).trim()) || patientPin;
+  const defaultAvatar = avatar || 'https://lh3.googleusercontent.com/aida-public/AB6AXuD99byptjuhNgCpydCJ16Hz_u_ZwJfqSRxclPZrtP416owqTMZzluxrdWg5KmtITrgFspnVZilMdkGKNNWMhUn6vK7mho-aKAMpXaw-8yrIbFJZ--m39KTPcPeFXqb726pHlVGQOzDHaIJO7UoGfXAG3oYLxr9BZ4pUwFKXy7wI9t5aH0OQ1k6nkoZgQNI21oK4tMrmor4LzWsOoIEKmTho80rO4onBcCN2ed8aX4g';
+  const condList = Array.isArray(conditions)
+    ? conditions
+    : (conditions ? conditions.split(',').map(c => c.trim()).filter(Boolean) : []);
+
+  try {
+    // 1. Insert patient record
+    await db.query(`
+      INSERT INTO patients (id, patient_code, name, age, relation, residence, avatar, status, adherence_score, conditions, assigned_doctor, doctor_specialty)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, 'Active', 100, $8, $9, $10)
+    `, [
+      patientId,
+      code,
+      name.trim(),
+      parseInt(age, 10) || 75,
+      relation || 'Family Member',
+      residence || 'Room 101',
+      defaultAvatar,
+      condList,
+      assignedDoctor || 'General Practitioner',
+      doctorSpecialty || 'Family Care'
+    ]);
+
+    // 2. Insert user record for authentication
+    const userId = `${patientId}-user`;
+    await db.query(`
+      INSERT INTO users (id, name, role, patient_code, pin, password, avatar, role_title)
+      VALUES ($1, $2, 'patient', $3, $4, $5, $6, 'Patient')
+    `, [
+      userId,
+      name.trim(),
+      code,
+      patientPin,
+      patientPassword,
+      defaultAvatar
+    ]);
+
+    // 3. Format response
+    const patientRow = {
+      id: patientId,
+      patient_code: code,
+      name: name.trim(),
+      age: parseInt(age, 10) || 75,
+      relation: relation || 'Family Member',
+      residence: residence || 'Room 101',
+      avatar: defaultAvatar,
+      status: 'Active',
+      adherence_score: 100,
+      conditions: condList,
+      assigned_doctor: assignedDoctor || 'General Practitioner',
+      doctor_specialty: doctorSpecialty || 'Family Care'
+    };
+
+    const formatted = formatPatient(patientRow, [], []);
+
+    res.status(201).json({
+      success: true,
+      message: 'Patient and login credentials created successfully',
+      data: formatted,
+      credentials: {
+        patientId: code,
+        patientCode: code,
+        pin: patientPin,
+        password: patientPassword
+      }
+    });
+  } catch (err) {
+    console.error('Error creating patient:', err);
+    res.status(500).json({ success: false, message: 'Failed to create patient', error: err.message });
   }
 });
 

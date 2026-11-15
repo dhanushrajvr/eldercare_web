@@ -2,12 +2,15 @@ import React, { useState } from 'react';
 import { usePatients } from '../context/PatientContext';
 import { MedicationModal } from '../components/modals/MedicationModal';
 import { DoctorModal } from '../components/modals/DoctorModal';
+import { AddPatientModal } from '../components/modals/AddPatientModal';
 
 export function FamilyDashboard({ onNavigateToManage }) {
-  const { patients, addMedication, updateDoctorVisit, showToast } = usePatients();
+  const { patients, addPatient, addMedication, updateDoctorVisit } = usePatients();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPatientForMed, setSelectedPatientForMed] = useState(null);
   const [selectedPatientForDoc, setSelectedPatientForDoc] = useState(null);
+  const [isAddPatientOpen, setIsAddPatientOpen] = useState(false);
+  const [enrolledCredentials, setEnrolledCredentials] = useState(null);
 
   const filteredPatients = patients.filter((p) => {
     const q = searchQuery.toLowerCase();
@@ -41,6 +44,18 @@ export function FamilyDashboard({ onNavigateToManage }) {
     }
   };
 
+  const handleSavePatient = async (patientData) => {
+    const res = await addPatient(patientData);
+    if (res && res.credentials) {
+      setEnrolledCredentials({
+        name: patientData.name,
+        patientCode: res.credentials.patientCode || res.credentials.patientId,
+        password: res.credentials.password || res.credentials.pin,
+        pin: res.credentials.pin
+      });
+    }
+  };
+
   return (
     <div className="flex flex-col w-full pb-16 max-w-7xl mx-auto">
       {/* Dashboard Header */}
@@ -70,13 +85,47 @@ export function FamilyDashboard({ onNavigateToManage }) {
           <button
             type="button"
             className="h-10 px-3.5 sm:px-4 rounded-xl bg-primary text-on-primary text-xs sm:text-sm font-semibold flex items-center gap-1.5 hover:bg-primary-container transition-all shadow-xs shrink-0 cursor-pointer active:scale-95"
-            onClick={() => showToast('New family patient enrollment wizard ready', 'person_add')}
+            onClick={() => setIsAddPatientOpen(true)}
           >
             <span className="material-symbols-outlined text-[18px]">person_add</span>
             <span>Add Patient</span>
           </button>
         </div>
       </div>
+
+      {/* Enrolled Patient Credentials Success Card */}
+      {enrolledCredentials && (
+        <div className="mb-6 p-4 sm:p-5 rounded-2xl bg-primary-fixed/30 border border-primary/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+          <div className="flex items-start gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-primary-container text-on-primary-container flex items-center justify-center shrink-0">
+              <span className="material-symbols-outlined text-2xl">check_circle</span>
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="text-sm sm:text-base font-bold text-on-surface">
+                {enrolledCredentials.name} Successfully Enrolled in Database!
+              </span>
+              <span className="text-xs sm:text-sm text-secondary mt-0.5">
+                Share these login details with the patient so they can sign into their dashboard:
+              </span>
+              <div className="flex items-center gap-4 mt-2 flex-wrap">
+                <div className="px-3 py-1 rounded-lg bg-surface-container-lowest border border-outline-variant/30 text-xs sm:text-sm font-mono font-bold text-primary">
+                  Patient ID: <span className="text-on-surface">{enrolledCredentials.patientCode}</span>
+                </div>
+                <div className="px-3 py-1 rounded-lg bg-surface-container-lowest border border-outline-variant/30 text-xs sm:text-sm font-mono font-bold text-primary">
+                  PIN / Password: <span className="text-on-surface">{enrolledCredentials.password}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setEnrolledCredentials(null)}
+            className="self-end sm:self-center px-3 py-1.5 rounded-xl bg-surface-container text-secondary text-xs font-semibold hover:bg-surface-container-high transition-all cursor-pointer shrink-0"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* Patients Grid */}
       <div className="grid grid-cols-1 gap-4 sm:gap-6">
@@ -232,6 +281,15 @@ export function FamilyDashboard({ onNavigateToManage }) {
           onSave={handleSaveDoctorVisit}
           patientName={selectedPatientForDoc.name}
           initialData={selectedPatientForDoc.nextDoctorVisit}
+        />
+      )}
+
+      {/* Add Patient Modal */}
+      {isAddPatientOpen && (
+        <AddPatientModal
+          isOpen={isAddPatientOpen}
+          onClose={() => setIsAddPatientOpen(false)}
+          onSave={handleSavePatient}
         />
       )}
     </div>

@@ -57,6 +57,27 @@ describe('Frontend API Service - Client Fallback & Contract Tests', () => {
     });
   });
 
+  describe('api.addPatient()', () => {
+    it('creates and returns patient with generated credentials in offline fallback mode', async () => {
+      const newPatientData = {
+        name: 'Robert Vance',
+        age: 80,
+        relation: 'Father',
+        residence: 'Room 204',
+        patientCode: 'EC-99123',
+        pin: '1234'
+      };
+
+      const result = await api.addPatient(newPatientData);
+      assert.strictEqual(result.success, true);
+      assert.ok(result.data);
+      assert.strictEqual(result.data.name, 'Robert Vance');
+      assert.strictEqual(result.data.patientCode, 'EC-99123');
+      assert.strictEqual(result.credentials.patientId, 'EC-99123');
+      assert.strictEqual(result.credentials.pin, '1234');
+    });
+  });
+
   describe('api mutation operations fail safely when disconnected', () => {
     it('takeMedication returns null on connection failure', async () => {
       const res = await api.takeMedication('p-1', ['med-1']);
