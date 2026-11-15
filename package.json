@@ -1,0 +1,24 @@
+{
+  "name": "eldercare-web",
+  "version": "1.0.0",
+  "description": "ElderCare Web Application - Patient and Caregiver Management System",
+  "private": true,
+  "scripts": {
+    "test": "npm test --prefix backend && npm test --prefix frontend",
+    "test:backend": "npm test --prefix backend",
+    "test:frontend": "npm test --prefix frontend",
+    "test:watch": "npm test --prefix backend -- --watch",
+    "lint": "npm run lint --prefix frontend",
+    "build": "npm run build --prefix frontend",
+    "check": "npm test && npm run lint && npm run build"
+  },
+  "keywords": [
+    "eldercare",
+    "healthcare",
+    "react",
+    "express",
+    "supabase"
+  ],
+  "author": "",
+  "license": "ISC"
+}

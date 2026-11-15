@@ -335,6 +335,15 @@ app.put('/api/patients/:id/appointment', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`ElderCare Express server connected to Supabase and running on port ${PORT}`);
+// 9. 404 Catch-All
+app.use((req, res) => {
+  res.status(404).json({ success: false, message: 'Endpoint not found' });
 });
+
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`ElderCare Express server connected to Supabase and running on port ${PORT}`);
+  });
+}
+
+module.exports = { app, formatPatient };
