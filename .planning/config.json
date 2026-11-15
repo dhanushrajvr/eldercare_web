@@ -1,0 +1,16 @@
+{
+  "version": "1.0",
+  "project": "ElderCare",
+  "workflow": {
+    "auto_verify": true,
+    "model_profile": "balanced"
+  },
+  "integrations": {
+    "supabase": {
+      "enabled": true
+    },
+    "vercel": {
+      "enabled": true
+    }
+  }
+}
